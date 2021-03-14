@@ -28,7 +28,7 @@ export class WebsocketProducer {
 				ws.send(`RE: ${message}`);
 			});
 
-			ws.send(`Connected to the trader bot service. Connected Client Id: ${ws.id}`);
+			ws.send(`Connected to the bot manager service. Connected Client Id: ${ws.id}`);
 			ws.send(JSON.stringify({ clientSocketId: ws.id }));
 		});
 
