@@ -1,0 +1,114 @@
+{
+  "extends": "tslint:all",
+  "rules": {
+    "no-console": false,
+    "import-spacing": true,
+    "max-line-length": [
+      true,
+      140
+    ],
+    "triple-equals": [
+      true,
+      "allow-null-check"
+    ],
+    "quotemark": [
+      true,
+      "single"
+    ],
+    "semicolon": [
+      true,
+      "always",
+      "ignore-interfaces"
+    ],
+    "indent": [
+      true,
+      "tabs",
+      4
+    ],
+    "no-any": false,
+    "whitespace": [
+      true,
+      "check-branch",
+      "check-decl",
+      "check-operator",
+      "check-separator",
+      "check-rest-spread",
+      "check-type",
+      "check-module",
+      "check-type-operator",
+      "check-preblock",
+      "check-postbrace"
+    ],
+    "comment-format": [
+      true,
+      "check-space"
+    ],
+    "no-consecutive-blank-lines": true,
+    "trailing-comma": [
+      true,
+      {
+        "singleline": "never",
+        "multiline": {
+          "objects": "never",
+          "arrays": "never",
+          "functions": "never",
+          "typeLiterals": "ignore"
+        }
+      }
+    ],
+    "await-promise": [
+      true,
+      "RequestPromise"
+    ],
+    "completed-docs": false,
+    "file-name-casing": [
+      true
+    ],
+    "interface-name": false,
+    "linebreak-style": false,
+    "newline-before-return": false,
+    "newline-per-chained-call": false,
+    "no-angle-bracket-type-assertion": false,
+    "no-implicit-dependencies": false,
+    "no-inferrable-types": false,
+    "no-object-literal-type-assertion": false,
+    "no-parameter-properties": false,
+    "no-unnecessary-class": ["allow-static-only"],
+    "no-use-before-declare": false,
+    "no-void-expression": false,
+    "only-arrow-functions": false,
+    "ordered-imports": false,
+    "prefer-template": [
+      true,
+      "allow-single-concat"
+    ],
+    "promise-function-async": false,
+    "restrict-plus-operands": false,
+    "strict-boolean-expressions": false,
+    "variable-name": false,
+    "max-classes-per-file": false,
+    "no-default-import": false,
+    "no-default-export": false,
+    "no-submodule-imports": false,
+    "object-literal-sort-keys": false,
+    "no-empty-interface": false,
+    "member-ordering": false,
+    "interface-over-type-literal": false,
+    "curly": false,
+    "no-magic-numbers": false,
+    "align": false,
+    "prefer-switch": false,
+    "typedef": [
+      true,
+      "call-signature",
+      "arrow-call-signature",
+      "parameter",
+      "arrow-parameter",
+      "property-declaration",
+      "member-variable-declaration",
+      "object-destructuring",
+      "array-destructuring",
+      "variable-declaration"
+    ]
+  }
+}
