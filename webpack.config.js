@@ -7,7 +7,7 @@ module.exports = {
         /^[a-z\-0-9]+$/ // Ignore node_modules folder
     ],
     output: {
-        filename: 'compiled',
+        filename: 'compiled.js',
         path: `${root}/dist`,
         libraryTarget: "commonjs"
     },

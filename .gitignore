@@ -5,6 +5,7 @@ yarn-error.log
 .nyc_output
 coverage
 build/
+dist/
 src/**/*.js
 .DS_Store
 !src/bin/*.js
