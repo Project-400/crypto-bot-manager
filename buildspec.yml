@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Pre-Build Phase Has Begun"
+  build:
+    commands:
+      - echo "Build Phase Has Begun"
+      - npm i
+      - npm run test
+      - npm run build
+  post_build:
+    commands:
+      - echo "Finished Build Phase"
+
+artifacts:
+  files:
+    - '**/*'
