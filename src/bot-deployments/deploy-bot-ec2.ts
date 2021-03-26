@@ -4,7 +4,7 @@ import * as AWS from 'aws-sdk';
 
 export class DeployBotEc2 {
 
-	private static LaunchEC2 = (): any => {
+	public static LaunchEC2 = (): Promise<any> => {
 		AWS.config.update({ region: 'eu-west-1' });
 
 		const userData: string = UserData();
@@ -44,8 +44,11 @@ export class DeployBotEc2 {
 
 					tagPromise
 						.then(
-							(tagData) => {
+							async (tagData) => {
 								console.log('Instance tagged');
+								setInterval(async () => {
+									await DeployBotEc2.GetDeploymentURL(instanceId);
+								}, 5000);
 								resolve({ instanceData, tagData })
 							}
 						).catch(
@@ -61,5 +64,31 @@ export class DeployBotEc2 {
 		})
 
 	}
+
+	private static GetDeploymentURL = (instanceId: string) => {
+		console.log('------------ Instance Details ------------');
+		AWS.config.update({ region: 'eu-west-1' });
+		const ec2 = new AWS.EC2({ apiVersion: '2016-11-15' });
+
+		const params = {
+			InstanceIds: [
+				instanceId
+			]
+		};
+
+		return new Promise((resolve, reject) => {
+			ec2.describeInstances(params, function (err, data) {
+				if (err) {
+					console.log(err);
+				}
+
+				console.log(data);
+				console.log(data.Reservations?.length && data.Reservations[0].Instances);
+				resolve(data);
+			});
+		});
+
+	}
+
 
 }
