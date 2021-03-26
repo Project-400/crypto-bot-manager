@@ -2,25 +2,23 @@ import https from 'https';
 import * as AWS from 'aws-sdk';
 import { Consumer, SQSMessage } from 'sqs-consumer';
 import { ENV } from '../environment';
+import {DeployBotEc2} from "./deploy-bot-ec2";
 
 AWS.config.update({
-	region: ENV.AWS_REGION,
-	accessKeyId: ENV.AWS_ACCESS_KEY_ID,
-	secretAccessKey: ENV.AWS_SECRET_ACCESS_KEY_ID
+	region: ENV.AWS.AWS_REGION,
+	accessKeyId: ENV.AWS.AWS_ACCESS_KEY_ID,
+	secretAccessKey: ENV.AWS.AWS_SECRET_ACCESS_KEY_ID
 });
-
 
 export class SQSConsumer {
 
 	public static SetupConsumer = async (): Promise<void> => {
-		// const queueName: string = await SQSConsumer.CreateQueue(instanceId);
-		// await SQSConsumer.SubscribeToSNSTopic(queueName);
 		SQSConsumer.ListenToQueue();
 	}
 
 	public static ListenToQueue = (): void => {
 		const consumer: Consumer = Consumer.create({
-			queueUrl: `https://sqs.${ENV.AWS_REGION}.amazonaws.com/${ENV.AWS_ACCOUNT_ID}/${ENV.AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME}`,
+			queueUrl: `https://sqs.${ENV.AWS.AWS_REGION}.amazonaws.com/${ENV.AWS.AWS_ACCOUNT_ID}/${ENV.AWS.AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME}`,
 			handleMessage: async (message: SQSMessage): Promise<void> => {
 				await SQSConsumer.HandleMessage(message);
 			},
@@ -44,7 +42,7 @@ export class SQSConsumer {
 		consumer.start();
 	}
 
-	private static HandleMessage = (message: SQSMessage): void => {
+	private static HandleMessage = async (message: SQSMessage): Promise<void> => {
 		let messageBody: any;
 
 		console.log(message);
@@ -56,9 +54,20 @@ export class SQSConsumer {
 		}
 
 		if (messageBody) {
-			const deploymentMessage: any = JSON.parse(messageBody.Message);
+			try {
+				const deploymentMessage: any = JSON.parse(messageBody.Message);
 
-			console.log(deploymentMessage)
+				console.log(deploymentMessage);
+
+				if (deploymentMessage?.ec2Deployment?.appName === 'ExpressTemplate') {
+					await DeployBotEc2.LaunchEC2();
+				} else {
+					console.error('Invalid Deployment Message')
+				}
+			} catch (e) {
+				console.error('Invalid Deployment Message - JSON Format')
+				console.error(e);
+			}
 
 			// if (currencySuggestion.symbol) CurrencySuggestionsManager.AddSuggestion(currencySuggestion);
 		}
