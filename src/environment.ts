@@ -11,6 +11,8 @@ export const AWS_SECRET_ACCESS_KEY_ID: string = process.env.AWS_SECRET_ACCESS_KE
 
 export const AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME: string = process.env.AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME as string;
 
+export const BOT_PER_INSTANCE_LIMIT: number = Number(process.env.BOT_PER_INSTANCE_LIMIT);
+
 export const ENV: { [key: string]: any } = {
 	AWS: {
 		AWS_ACCOUNT_ID,
@@ -18,6 +20,7 @@ export const ENV: { [key: string]: any } = {
 		AWS_ACCESS_KEY_ID,
 		AWS_SECRET_ACCESS_KEY_ID,
 		AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME
-	}
+	},
+	BOT_PER_INSTANCE_LIMIT
 };
 

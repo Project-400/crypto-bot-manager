@@ -1,8 +1,6 @@
-interface Deployment {
-	dns: string;
-	deployId: string;
-	botCount: number;
-}
+import {Deployment} from "../models/deployment";
+import {BOT_PER_INSTANCE_LIMIT, ENV} from "../environment";
+
 interface DeployedInstances {
 	latestBuild: Deployment[];
 	previousBuilds: Deployment[];
@@ -18,12 +16,25 @@ export class BotManager {
 
 	public static RegisterNewBuild = (deployId: string, newInstanceDNS: string): void => {
 		BotManager.currentDeployId = deployId;
-		BotManager.deployInstances.previousBuilds = [ ...BotManager.deployInstances.previousBuilds, ...BotManager.deployInstances.latestBuild ];
-		BotManager.deployInstances.latestBuild = [ {
-			deployId,
-			dns: newInstanceDNS,
-			botCount: 0
-		} ];
+		BotManager.deployInstances.previousBuilds = [
+			...BotManager.deployInstances.previousBuilds,
+			...BotManager.deployInstances.latestBuild
+		];
+		BotManager.deployInstances.latestBuild = [ new Deployment(newInstanceDNS, deployId) ];
+	}
+
+	public static CreateTradeBot = (botId: string): void => {
+		const deployment: Deployment = BotManager.GetDeploymentWithMostBots();
+		if (deployment) deployment.AddNewBot(botId);
+		else console.error('NO DEPLOYMENTS LEFT')
+	}
+
+	private static GetDeploymentWithMostBots = (): Deployment => { // Return the deployment with most bots less than limit
+		return BotManager.deployInstances.latestBuild.sort((a: Deployment, b: Deployment) => {
+			if (a.botCount < b.botCount) return 1;
+			if (a.botCount > b.botCount) return -1;
+			return 0;
+		}).filter((d: Deployment) => d.botCount < ENV.BOT_PER_INSTANCE_LIMIT)[0];
 	}
 
 }
