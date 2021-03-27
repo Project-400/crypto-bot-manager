@@ -5,7 +5,7 @@ export default class CrudServiceDeployments extends CrudService {
 
 	private static SERVICE_PATH: string = '/deployment';
 
-	public static GetLatestDeploymentLog = async (appName: string): Promise<Ec2InstanceDeployment> =>
+	public static GetLatestDeploymentLog = async (appName: string): Promise<{ success: boolean; latestDeploy: Ec2InstanceDeployment }> =>
 		CrudService.get(`${CrudServiceDeployments.SERVICE_PATH}/latest/${appName}`)
 
 }
