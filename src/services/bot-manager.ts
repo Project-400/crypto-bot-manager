@@ -1,6 +1,7 @@
 interface Deployment {
 	dns: string;
 	deployId: string;
+	botCount: number;
 }
 interface DeployedInstances {
 	latestBuild: Deployment[];
@@ -17,10 +18,11 @@ export class BotManager {
 
 	public static RegisterNewBuild = (deployId: string, newInstanceDNS: string): void => {
 		BotManager.currentDeployId = deployId;
-		BotManager.deployInstances.previousBuilds = BotManager.deployInstances.latestBuild;
+		BotManager.deployInstances.previousBuilds = [ ...BotManager.deployInstances.previousBuilds, ...BotManager.deployInstances.latestBuild ];
 		BotManager.deployInstances.latestBuild = [ {
 			deployId,
-			dns: newInstanceDNS
+			dns: newInstanceDNS,
+			botCount: 0
 		} ];
 	}
 
