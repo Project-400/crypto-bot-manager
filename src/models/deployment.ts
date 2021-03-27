@@ -19,4 +19,15 @@ export class Deployment {
 		this.pendingBots.push(botId);
 	}
 
+	public ConfirmBot = (botId: string) => {
+		const index: number = this.pendingBots.findIndex((b: string) => b === botId);
+		if (index > -1) this.pendingBots.splice(index, 1);
+		this.bots.push(botId);
+	}
+
+	public RemoveBot = (botId: string) => {
+		const index: number = this.bots.findIndex((b: string) => b === botId);
+		if (index > -1) this.bots.splice(index, 1);
+	}
+
 }
