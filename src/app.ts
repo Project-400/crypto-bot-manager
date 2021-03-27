@@ -7,6 +7,7 @@ import {SQSConsumer} from "./bot-deployments/sqs-consumer";
 import * as AWS from 'aws-sdk';
 import {ENV} from "./environment";
 import {BotManager} from "./services/bot-manager";
+import {InstanceRetrieval} from "./startup/instance-retrieval";
 
 const app: express.Application = express();
 
@@ -16,7 +17,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/v1', indexRouter);
 
-BotManager.GatherCurrentlyRunningInstances();
+InstanceRetrieval.Setup().then(() => {
+	console.log('Manage works after this')
+
+	console.log(BotManager.GetAllBuilds())
+});
 
 SQSConsumer.SetupConsumer();
 WebsocketProducer.setup(app);

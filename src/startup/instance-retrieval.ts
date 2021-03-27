@@ -10,20 +10,23 @@ export class InstanceRetrieval {
 	public static Setup = async (): Promise<void> => {
 		const deploymentId: string = await InstanceRetrieval.GetLatestDeploymentLog();
 
-
+		await InstanceRetrieval.GatherCurrentlyRunningInstances(deploymentId);
 	}
 
 	private static GetLatestDeploymentLog = async (): Promise<string> => {
-		const deploymentLog: Ec2InstanceDeployment = await CrudServiceDeployments.GetLatestDeploymentLog(ENV.EC2_APP_NAME);
+		const deploymentLogResult: { success: boolean; latestDeploy: Ec2InstanceDeployment } =
+			await CrudServiceDeployments.GetLatestDeploymentLog(ENV.APP_NAME);
 
-		if (!deploymentLog) throw Error('No deployment log retrieved from CRUD Service');
+		console.log(deploymentLogResult)
 
-		BotManager.SetCurrentDeploymentId(deploymentLog.deploymentId);
+		if (!deploymentLogResult) throw Error('No deployment log retrieved from CRUD Service');
 
-		return deploymentLog.deploymentId;
+		BotManager.SetCurrentDeploymentId(deploymentLogResult.latestDeploy.deploymentId);
+
+		return deploymentLogResult.latestDeploy.deploymentId;
 	}
 
-	public static GatherCurrentlyRunningInstances = () => {
+	private static GatherCurrentlyRunningInstances = async (deploymentId: string) => {
 		AWS.config.update({region: 'eu-west-1'});
 		const ec2 = new AWS.EC2({apiVersion: '2016-11-15'});
 
@@ -31,47 +34,53 @@ export class InstanceRetrieval {
 			Filters: [
 				{
 					Name: 'tag:AppName',
-					Values: [ ENV.EC2_APP_NAME ]
+					Values: [ENV.EC2_APP_NAME_TAG]
 				}
 			]
 		};
 
-		ec2.describeInstances(params, function (err, data) {
-			const deployments: (AWS.EC2.Instance | undefined)[] | undefined = data.Reservations
-				?.map((r: AWS.EC2.Reservation) => r.Instances)
-				.flat();
-			// .map((i: AWS.EC2.Instance | undefined) => i && i.PublicDnsName);
+		await new Promise((resolve, reject) => {
+			ec2.describeInstances(params, function (err, data) {
+				const deployments: (AWS.EC2.Instance | undefined)[] | undefined = data.Reservations
+					?.map((r: AWS.EC2.Reservation) => r.Instances)
+					.flat();
 
-			const latestBuildDeployments: (AWS.EC2.Instance)[] | undefined = deployments?.filter((i: AWS.EC2.Instance | undefined) => {
-				if (!i) return false;
-				const deploymentId: AWS.EC2.Tag | undefined = i.Tags?.find((tag: AWS.EC2.Tag) => tag.Key === 'DeploymentId');
-				return !!(deploymentId && deploymentId.Value === BotManager.currentDeploymentId);
-			}) as AWS.EC2.Instance[];
+				const latestBuildDeployments: (AWS.EC2.Instance)[] | undefined = deployments?.filter((i: AWS.EC2.Instance | undefined) => {
+					if (!i) return false;
+					const deploymentTag: AWS.EC2.Tag | undefined = i.Tags?.find((tag: AWS.EC2.Tag) => tag.Key === 'DeploymentId');
+					return !!(deploymentTag && deploymentTag.Value === deploymentId);
+				}) as AWS.EC2.Instance[];
 
-			const previousBuildDeployments: (AWS.EC2.Instance)[] | undefined = deployments?.filter((i: AWS.EC2.Instance | undefined) => {
-				if (!i) return false;
-				const deploymentId: AWS.EC2.Tag | undefined = i.Tags?.find((tag: AWS.EC2.Tag) => tag.Key === 'DeploymentId');
-				return !!(deploymentId && deploymentId.Value !== BotManager.currentDeploymentId);
-			}) as AWS.EC2.Instance[];
+				const previousBuildDeployments: (AWS.EC2.Instance)[] | undefined = deployments?.filter((i: AWS.EC2.Instance | undefined) => {
+					if (!i) return false;
+					const deploymentTag: AWS.EC2.Tag | undefined = i.Tags?.find((tag: AWS.EC2.Tag) => tag.Key === 'DeploymentId');
+					return !!(deploymentTag && deploymentTag.Value !== deploymentId);
+				}) as AWS.EC2.Instance[];
 
-			if (latestBuildDeployments) {
-				BotManager.deployInstances.latestBuild = latestBuildDeployments
-					.filter((i: AWS.EC2.Instance | undefined): boolean => !!i)
-					.map((i: AWS.EC2.Instance): Deployment | undefined => {
-						if (i.PublicDnsName) return new Deployment(i.PublicDnsName, BotManager.currentDeploymentId);
-					})
-					.filter((d: Deployment | undefined): boolean => !!d) as Deployment[];
-			}
-			if (previousBuildDeployments) {
-				BotManager.deployInstances.previousBuilds = previousBuildDeployments
-					.filter((i: AWS.EC2.Instance | undefined): boolean => !!i)
-					.map((i: AWS.EC2.Instance): Deployment | undefined => {
-						if (i.PublicDnsName) return new Deployment(i.PublicDnsName, 'Unknown');
-					})
-					.filter((d: Deployment | undefined): boolean => !!d) as Deployment[];
-			}
+				if (latestBuildDeployments) {
+					const latestBuildInstances: Deployment[] = latestBuildDeployments
+						.filter((i: AWS.EC2.Instance | undefined): boolean => !!i)
+						.map((i: AWS.EC2.Instance): Deployment | undefined => {
+							if (i.PublicDnsName) return new Deployment(i.PublicDnsName, deploymentId);
+						})
+						.filter((d: Deployment | undefined): boolean => !!d) as Deployment[];
 
-			console.log(BotManager.deployInstances)
+					BotManager.SetLatestBuilds(latestBuildInstances);
+				}
+				if (previousBuildDeployments) {
+					const previousBuildInstances: Deployment[] = previousBuildDeployments
+						.filter((i: AWS.EC2.Instance | undefined): boolean => !!i)
+						.map((i: AWS.EC2.Instance): Deployment | undefined => {
+							const depId: string = i?.Tags?.find((t: AWS.EC2.Tag) => t?.Key === 'DeploymentId')?.Value || 'Unknown';
+							if (i.PublicDnsName) return new Deployment(i.PublicDnsName, depId);
+						})
+						.filter((d: Deployment | undefined): boolean => !!d) as Deployment[];
+
+					BotManager.SetPreviousBuilds(previousBuildInstances);
+				}
+
+				resolve();
+			});
 		});
 	}
 
