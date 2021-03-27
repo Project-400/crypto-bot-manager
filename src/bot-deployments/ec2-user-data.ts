@@ -31,7 +31,7 @@ export const UserData = (): string => {
 		'\n' +
 		'# echo "Retrieving Deployment Zipped Folder From S3"\n' +
 		'\n' +
-		'fileUrl=`curl https://w0sizekdyd.execute-api.eu-west-1.amazonaws.com/dev/deployment/latest/ExpressTemplate` \n' +
+		'fileUrl=`curl https://w0sizekdyd.execute-api.eu-west-1.amazonaws.com/dev/deployment/latest/location/ExpressTemplate` \n' +
 		'fileUrl=`echo "$fileUrl" | tr -d \'"\'`\n' +
 		'aws s3 cp $fileUrl .\n' +
 		'\n' +

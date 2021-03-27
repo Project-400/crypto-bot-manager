@@ -3,7 +3,7 @@ import * as AWS from 'aws-sdk';
 
 export class DeployBotEc2 {
 
-	public static LaunchEC2 = (): Promise<any> => {
+	public static LaunchEC2 = (deploymentId: string): Promise<any> => {
 		AWS.config.update({ region: 'eu-west-1' });
 
 		const userData: string = UserData();
@@ -16,7 +16,7 @@ export class DeployBotEc2 {
 			UserData: userData
 		};
 
-		const instancePromise: any = new AWS.EC2({apiVersion: '2016-11-15'})
+		const instancePromise: any = new AWS.EC2({ apiVersion: '2016-11-15' })
 			.runInstances(instanceParams)
 			.promise();
 
@@ -33,6 +33,14 @@ export class DeployBotEc2 {
 							{
 								Key: 'Name',
 								Value: `CryptoBot-${new Date().toISOString()}`
+							},
+							{
+								Key: 'AppName',
+								Value: `CryptoBot-Express-Application`
+							},
+							{
+								Key: 'DeploymentId',
+								Value: deploymentId
 							}
 						]
 					};

@@ -60,7 +60,7 @@ export class SQSConsumer {
 				console.log(deploymentMessage);
 
 				if (deploymentMessage?.ec2Deployment?.appName === 'ExpressTemplate') {
-					await DeployBotEc2.LaunchEC2();
+					await DeployBotEc2.LaunchEC2(deploymentMessage?.ec2Deployment?.deploymentId);
 				} else {
 					console.error('Invalid Deployment Message')
 				}
