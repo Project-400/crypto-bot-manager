@@ -10,7 +10,7 @@ export class HTTP {
 					else reject(res);
 				})
 				.catch((error: AxiosError): void => {
-					console.error(error);
+					// console.error(error);
 					reject(error);
 				});
 		});
@@ -24,7 +24,7 @@ export class HTTP {
 					else reject(res);
 				})
 				.catch((error: AxiosError): void => {
-					console.error(error);
+					// console.error(error);
 					reject(error);
 				});
 		});

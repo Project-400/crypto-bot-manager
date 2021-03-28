@@ -4,8 +4,6 @@ import cookieParser from 'cookie-parser';
 import indexRouter from './routes';
 import { WebsocketProducer } from './config/websocket/producer';
 import {SQSConsumer} from "./bot-deployments/sqs-consumer";
-import * as AWS from 'aws-sdk';
-import {ENV} from "./environment";
 import {BotManager} from "./services/bot-manager";
 import {InstanceRetrieval} from "./startup/instance-retrieval";
 
@@ -18,9 +16,9 @@ app.use(cookieParser());
 app.use('/v1', indexRouter);
 
 InstanceRetrieval.Setup().then(() => {
-	console.log('Manage works after this')
-
 	console.log(BotManager.GetAllBuilds())
+
+	BotManager.MonitorInstancesHealth();
 });
 
 SQSConsumer.SetupConsumer();
