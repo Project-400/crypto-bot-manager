@@ -1,5 +1,6 @@
 import { UserData } from './ec2-user-data';
 import * as AWS from 'aws-sdk';
+import {BotManager} from "../services/bot-manager";
 
 export class DeployBotEc2 {
 
@@ -53,7 +54,7 @@ export class DeployBotEc2 {
 						.then(
 							async (tagData) => {
 								console.log('Instance tagged');
-								DeployBotEc2.GetDeploymentURL(instanceId);
+								DeployBotEc2.GetDeploymentURL(instanceId, deploymentId);
 								// setInterval(async () => {
 								// 	await
 								// }, 5000);
@@ -73,7 +74,7 @@ export class DeployBotEc2 {
 
 	}
 
-	private static GetDeploymentURL = async (instanceId: string) => {
+	private static GetDeploymentURL = async (instanceId: string, deploymentId: string) => {
 		AWS.config.update({region: 'eu-west-1'});
 		const ec2 = new AWS.EC2({apiVersion: '2016-11-15'});
 
@@ -114,6 +115,8 @@ export class DeployBotEc2 {
 				console.log('PUBLIC DNS');
 				console.log(publicDns);
 				clearInterval(interval);
+
+				BotManager.RegisterNewBuild(deploymentId, publicDns);
 			}
 		}, 5000);
 	}
