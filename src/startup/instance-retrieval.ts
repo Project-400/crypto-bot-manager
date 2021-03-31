@@ -7,13 +7,15 @@ import {BotManager} from "../services/bot-manager";
 
 export class InstanceRetrieval {
 
-	public static Setup = async (): Promise<void> => {
-		const deploymentId: string = await InstanceRetrieval.GetLatestDeploymentLog();
+	public static Setup = async (): Promise<Ec2InstanceDeployment> => {
+		const deployment: Ec2InstanceDeployment = await InstanceRetrieval.GetLatestDeploymentLog();
 
-		await InstanceRetrieval.GatherCurrentlyRunningInstances(deploymentId);
+		await InstanceRetrieval.GatherCurrentlyRunningInstances(deployment.deploymentId);
+
+		return deployment;
 	}
 
-	private static GetLatestDeploymentLog = async (): Promise<string> => {
+	public static GetLatestDeploymentLog = async (): Promise<Ec2InstanceDeployment> => {
 		const deploymentLogResult: { success: boolean; latestDeploy: Ec2InstanceDeployment } =
 			await CrudServiceDeployments.GetLatestDeploymentLog(ENV.APP_NAME);
 
@@ -21,9 +23,10 @@ export class InstanceRetrieval {
 
 		if (!deploymentLogResult) throw Error('No deployment log retrieved from CRUD Service');
 
-		BotManager.SetCurrentDeploymentId(deploymentLogResult.latestDeploy.deploymentId);
+		// BotManager.SetCurrentDeploymentId(deploymentLogResult.latestDeploy.deploymentId);
+		// BotManager.SetCurrentDeploymentLog(deploymentLogResult.latestDeploy);
 
-		return deploymentLogResult.latestDeploy.deploymentId;
+		return deploymentLogResult.latestDeploy;
 	}
 
 	private static GatherCurrentlyRunningInstances = async (deploymentId: string) => {
@@ -77,6 +80,10 @@ export class InstanceRetrieval {
 						.filter((d: Deployment | undefined): boolean => !!d) as Deployment[];
 
 					BotManager.SetPreviousBuilds(previousBuildInstances);
+				}
+
+				if ((!latestBuildDeployments || !latestBuildDeployments.length) && (!previousBuildDeployments || !previousBuildDeployments.length)) {
+					BotManager.DeployBotInstance();
 				}
 
 				resolve();

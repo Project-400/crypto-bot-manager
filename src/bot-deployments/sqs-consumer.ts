@@ -3,6 +3,7 @@ import * as AWS from 'aws-sdk';
 import { Consumer, SQSMessage } from 'sqs-consumer';
 import { ENV } from '../environment';
 import {DeployBotEc2} from "./deploy-bot-ec2";
+import {BotManager} from "../services/bot-manager";
 
 AWS.config.update({
 	region: ENV.AWS.AWS_REGION,
@@ -60,7 +61,7 @@ export class SQSConsumer {
 				console.log(deploymentMessage);
 
 				if (deploymentMessage?.ec2Deployment?.appName === 'ExpressTemplate') {
-					await DeployBotEc2.LaunchEC2(deploymentMessage?.ec2Deployment?.deploymentId);
+					BotManager.DeployBotInstance();
 				} else {
 					console.error('Invalid Deployment Message')
 				}

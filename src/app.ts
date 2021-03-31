@@ -6,6 +6,7 @@ import { WebsocketProducer } from './config/websocket/producer';
 import {SQSConsumer} from "./bot-deployments/sqs-consumer";
 import {BotManager} from "./services/bot-manager";
 import {InstanceRetrieval} from "./startup/instance-retrieval";
+import {Ec2InstanceDeployment} from "@crypto-tracker/common-types";
 
 const app: express.Application = express();
 
@@ -15,8 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/v1', indexRouter);
 
-InstanceRetrieval.Setup().then(() => {
+InstanceRetrieval.Setup().then((deploymentLog: Ec2InstanceDeployment) => {
 	console.log(BotManager.GetAllBuilds())
+	BotManager.SetCurrentDeploymentLog(deploymentLog);
 
 	BotManager.MonitorInstancesHealth();
 });

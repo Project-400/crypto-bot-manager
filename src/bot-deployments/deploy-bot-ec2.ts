@@ -112,8 +112,6 @@ export class DeployBotEc2 {
 			});
 
 			if (publicDns) {
-				console.log('PUBLIC DNS');
-				console.log(publicDns);
 				clearInterval(interval);
 
 				BotManager.RegisterNewBuild(deploymentId, publicDns);
