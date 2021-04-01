@@ -69,18 +69,28 @@ export class BotManager {
 			BotManager.deployInstances.latestBuild.forEach(async (deployment: Deployment) => {
 				try {
 					const response: { success: boolean } = await Health.HealthCheck(deployment.dns);
-					if (response.success) return console.log(`Deployment ${deployment.dns} is Healthy`);
+					if (response.success) {
+						deployment.UpdateSuccessfulHealthCall();
+						return console.log(`Deployment ${deployment.dns} is Healthy`);
+					}
+					deployment.UpdateNonSuccessfulHealthCall();
 					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				} catch (e) {
+					deployment.UpdateNonSuccessfulHealthCall();
 					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				}
 			});
 			BotManager.deployInstances.previousBuilds.forEach(async (deployment: Deployment) => {
 				try {
 					const response: { success: boolean } = await Health.HealthCheck(deployment.dns);
-					if (response.success) return console.log(`Deployment ${deployment.dns} is Healthy`);
+					if (response.success) {
+						deployment.UpdateSuccessfulHealthCall();
+						return console.log(`Deployment ${deployment.dns} is Healthy`);
+					}
+					deployment.UpdateNonSuccessfulHealthCall();
 					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				} catch (e) {
+					deployment.UpdateNonSuccessfulHealthCall();
 					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				}
 			});

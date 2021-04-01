@@ -55,9 +55,6 @@ export class DeployBotEc2 {
 							async (tagData) => {
 								console.log('Instance tagged');
 								DeployBotEc2.GetDeploymentURL(instanceId, deploymentId);
-								// setInterval(async () => {
-								// 	await
-								// }, 5000);
 								resolve({ instanceData, tagData })
 							}
 						).catch(
@@ -113,7 +110,6 @@ export class DeployBotEc2 {
 
 			if (publicDns) {
 				clearInterval(interval);
-
 				BotManager.RegisterNewBuild(deploymentId, publicDns);
 			}
 		}, 5000);

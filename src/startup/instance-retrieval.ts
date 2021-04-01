@@ -1,9 +1,9 @@
-import {ENV} from "../environment";
-import {Deployment} from "../models/deployment";
+import { ENV } from '../environment';
+import { Deployment } from '../models/deployment';
 import * as AWS from 'aws-sdk';
-import {Ec2InstanceDeployment} from "@crypto-tracker/common-types";
-import CrudServiceDeployments from "../external-api/crud-service/services/deployments";
-import {BotManager} from "../services/bot-manager";
+import { Ec2InstanceDeployment } from '@crypto-tracker/common-types';
+import CrudServiceDeployments from '../external-api/crud-service/services/deployments';
+import { BotManager } from '../services/bot-manager';
 
 export class InstanceRetrieval {
 
@@ -23,21 +23,18 @@ export class InstanceRetrieval {
 
 		if (!deploymentLogResult) throw Error('No deployment log retrieved from CRUD Service');
 
-		// BotManager.SetCurrentDeploymentId(deploymentLogResult.latestDeploy.deploymentId);
-		// BotManager.SetCurrentDeploymentLog(deploymentLogResult.latestDeploy);
-
 		return deploymentLogResult.latestDeploy;
 	}
 
 	private static GatherCurrentlyRunningInstances = async (deploymentId: string) => {
-		AWS.config.update({region: 'eu-west-1'});
-		const ec2 = new AWS.EC2({apiVersion: '2016-11-15'});
+		AWS.config.update({ region: 'eu-west-1' });
+		const ec2 = new AWS.EC2({ apiVersion: '2016-11-15' });
 
 		const params = {
 			Filters: [
 				{
 					Name: 'tag:AppName',
-					Values: [ENV.EC2_APP_NAME_TAG]
+					Values: [ ENV.EC2_APP_NAME_TAG ]
 				}
 			]
 		};
@@ -83,6 +80,7 @@ export class InstanceRetrieval {
 				}
 
 				if ((!latestBuildDeployments || !latestBuildDeployments.length) && (!previousBuildDeployments || !previousBuildDeployments.length)) {
+					console.log('No existing bot instances on startup - Deploying first instance');
 					BotManager.DeployBotInstance();
 				}
 

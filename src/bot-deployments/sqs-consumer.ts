@@ -2,8 +2,7 @@ import https from 'https';
 import * as AWS from 'aws-sdk';
 import { Consumer, SQSMessage } from 'sqs-consumer';
 import { ENV } from '../environment';
-import {DeployBotEc2} from "./deploy-bot-ec2";
-import {BotManager} from "../services/bot-manager";
+import { BotManager } from '../services/bot-manager';
 
 AWS.config.update({
 	region: ENV.AWS.AWS_REGION,
@@ -69,8 +68,6 @@ export class SQSConsumer {
 				console.error('Invalid Deployment Message - JSON Format')
 				console.error(e);
 			}
-
-			// if (currencySuggestion.symbol) CurrencySuggestionsManager.AddSuggestion(currencySuggestion);
 		}
 	}
 
