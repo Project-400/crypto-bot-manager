@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export enum DeploymentHealth {
 	HEALTHY = 'HEALTHY',
 	UNHEALTHY = 'UNHEALTHY'
@@ -20,9 +22,8 @@ export class Deployment {
 	public botCount: number;
 	public bots: string[];
 	public pendingBots: string[];
-	public lastSuccessfulHealthCall?: string;
-	public lastNonSuccessfulHealthCall?: string;
-	public beginningOfUnhealthyCalls?: string;
+	public lastSuccessfulHealthCall?: Date;
+	public beginningOfUnhealthyCalls?: Date;
 
 	public constructor(dns: string, deploymentId: string, health: DeploymentHealth = DeploymentHealth.UNHEALTHY, state: DeploymentState = DeploymentState.UNKNOWN) {
 		this.dns = dns;
@@ -52,17 +53,23 @@ export class Deployment {
 
 	public UpdateSuccessfulHealthCall = () => {
 		this.deploymentHealth = DeploymentHealth.HEALTHY;
-		this.lastSuccessfulHealthCall = new Date().toISOString();
-		this.lastNonSuccessfulHealthCall = undefined;
+		this.lastSuccessfulHealthCall = new Date();
 		this.beginningOfUnhealthyCalls = undefined;
+		console.log('Healthy....')
 	}
 
 	public UpdateNonSuccessfulHealthCall = () => {
 		this.deploymentHealth = DeploymentHealth.UNHEALTHY;
-		if (!this.beginningOfUnhealthyCalls) this.beginningOfUnhealthyCalls = new Date().toISOString();
-		this.lastNonSuccessfulHealthCall = new Date().toISOString();
-		// TODO: If gap between beginningOfUnhealthyCalls and lastNonSuccessfulHealthCall / now is greater than 60? seconds, replace instance
 		this.lastSuccessfulHealthCall = undefined;
+		if (!this.beginningOfUnhealthyCalls) this.beginningOfUnhealthyCalls = new Date();
+
+		if (moment.duration(moment().diff(moment(this.beginningOfUnhealthyCalls))).asSeconds() >= 60 && this.deploymentState !== DeploymentState.STARTING_UP) {
+			console.log('Unhealthy for more than a minute');
+		} else if (moment.duration(moment().diff(moment(this.beginningOfUnhealthyCalls))).asSeconds() >= 300 && this.deploymentState === DeploymentState.STARTING_UP) {
+			console.log('Unhealthy for more than 5 minutes');
+		} else {
+			console.log('Instance has been unhealthy for less than 60 seconds');
+		}
 	}
 
 }
