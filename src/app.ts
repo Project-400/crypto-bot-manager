@@ -14,10 +14,10 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.disable('etag');
 app.use('/v1', indexRouter);
 
 InstanceRetrieval.Setup().then((deploymentLog: Ec2InstanceDeployment) => {
-	console.log(BotManager.GetAllBuilds())
 	BotManager.SetCurrentDeploymentLog(deploymentLog);
 
 	BotManager.MonitorInstancesHealth();
@@ -26,7 +26,7 @@ InstanceRetrieval.Setup().then((deploymentLog: Ec2InstanceDeployment) => {
 SQSConsumer.SetupConsumer();
 WebsocketProducer.setup(app);
 
-const port: number = (Number(process.env.PORT) + 1) || 3000;
+const port: number = (Number(process.env.PORT) + 1) || 8080;
 const listenPort: number = port + 1;
 
 app.listen(listenPort, '0.0.0.0', (): void => {
