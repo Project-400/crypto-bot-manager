@@ -4,6 +4,7 @@ import { BotController, HealthController } from '../controllers';
 const indexRouter: Router = express.Router();
 
 indexRouter.get('/health', HealthController.health);
-indexRouter.post('/launch', BotController.createBot);
+indexRouter.post('/bot', BotController.createBot);
+indexRouter.delete('/bot', BotController.stopBot);
 
 export default indexRouter;

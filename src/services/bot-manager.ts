@@ -45,18 +45,26 @@ export class BotManager {
 		BotManager.deployInstances.latestBuild = [ new Deployment(newInstanceDNS, BotManager.currentDeploymentId) ];
 	}
 
-	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<{ success: boolean }> => {
+	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<{ success: boolean, botId?: string }> => {
 		const deployment: Deployment = BotManager.GetDeploymentWithMostBots();
 		if (deployment) {
 			const botId: string = deployment.AddNewBot();
 			BotManager.AddBotDirectoryItem(botId, deployment.dns);
 
-			const response = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
+			let response = undefined;
 
-			if (response.success) deployment.ConfirmBot(botId);
+			try {
+				response = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
+				console.log(response)
+			} catch (e) {
+				console.log(e)
+				return { success: false };
+			}
+
+			if (response && response.success) deployment.ConfirmBot(botId);
 			else deployment.FailBot(botId);
 
-			return response;
+			return { ...response, botId };
 		} else console.error('NO DEPLOYMENTS LEFT')
 		return { success: false };
 	}
@@ -143,6 +151,11 @@ export class BotManager {
 
 	public static MonitorInstancesHealth = (): void => {
 		BotManager.healthInterval = setInterval(() => {
+			console.log('------------------------')
+			console.log(JSON.stringify(BotManager.deployInstances.latestBuild))
+			console.log(BotManager.botDirectory)
+			console.log('------------------------')
+
 			BotManager.deployInstances.latestBuild.forEach(async (deployment: Deployment) => {
 				try {
 					const response: { success: boolean } = await Health.HealthCheck(deployment.dns);
