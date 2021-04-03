@@ -7,6 +7,7 @@ import {SQSConsumer} from "./bot-deployments/sqs-consumer";
 import {BotManager} from "./services/bot-manager";
 import {InstanceRetrieval} from "./startup/instance-retrieval";
 import {Ec2InstanceDeployment} from "@crypto-tracker/common-types";
+import {AutoDeletedBotsConsumer} from "./sns-sqs/auto-deleted-bots.consumer";
 
 const app: express.Application = express();
 
@@ -24,6 +25,7 @@ InstanceRetrieval.Setup().then((deploymentLog: Ec2InstanceDeployment) => {
 });
 
 SQSConsumer.SetupConsumer();
+AutoDeletedBotsConsumer.ListenToAutoDeleteBotConsumer();
 WebsocketProducer.setup(app);
 
 const port: number = (Number(process.env.PORT) + 1) || 8080;

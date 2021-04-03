@@ -16,7 +16,7 @@ export class BotController {
 			const response: { success: boolean } = await BotManager.CreateTradeBot(currency, quoteAmount, repeatedlyTrade, percentageLoss);
 
 			if (!response.success) return res.status(500).json({ success: false, error: 'Failed to create bot (1)' });
-			return res.status(200).json({ success: true });
+			return res.status(200).json(response);
 		} catch {
 			return res.status(500).json({ success: false, error: 'Failed to create bot (2)' });
 		}

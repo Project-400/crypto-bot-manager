@@ -55,9 +55,8 @@ export class BotManager {
 
 			try {
 				response = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
-				console.log(response)
 			} catch (e) {
-				console.log(e)
+				console.error(e);
 				return { success: false };
 			}
 
