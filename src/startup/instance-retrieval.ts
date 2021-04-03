@@ -1,5 +1,5 @@
 import { ENV } from '../environment';
-import { Deployment } from '../models/deployment';
+import { Deployment, DeploymentHealth, DeploymentState } from '../models/deployment';
 import * as AWS from 'aws-sdk';
 import { Ec2InstanceDeployment } from '@crypto-tracker/common-types';
 import CrudServiceDeployments from '../external-api/crud-service/services/deployments';
@@ -10,7 +10,14 @@ export class InstanceRetrieval {
 	public static Setup = async (): Promise<Ec2InstanceDeployment> => {
 		const deployment: Ec2InstanceDeployment = await InstanceRetrieval.GetLatestDeploymentLog();
 
-		await InstanceRetrieval.GatherCurrentlyRunningInstances(deployment.deploymentId);
+		if (ENV.TEST_MODE) {
+			console.log('Test Mode - Setting Localhost instance build DNS');
+			BotManager.SetLatestBuilds([
+				new Deployment('localhost', 'fake-deployment-id123', DeploymentHealth.HEALTHY, DeploymentState.WORKING)
+			]);
+		} {
+			await InstanceRetrieval.GatherCurrentlyRunningInstances(deployment.deploymentId);
+		}
 
 		return deployment;
 	}

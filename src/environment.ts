@@ -4,6 +4,8 @@ dotenv.config();
 
 export const PORT: string = process.env.PORT as string;
 
+export const TEST_MODE: boolean = process.env.TEST_MODE as string === 'true';
+
 export const CRUD_SERVICE_URL: string = process.env.CRUD_SERVICE_URL as string;
 
 export const APP_NAME: string = process.env.APP_NAME as string;
@@ -20,6 +22,7 @@ export const BOT_PER_INSTANCE_LIMIT: number = Number(process.env.BOT_PER_INSTANC
 
 export const ENV: { [key: string]: any } = {
 	APP_NAME,
+	TEST_MODE,
 	EC2_APP_NAME_TAG,
 	AWS: {
 		AWS_ACCOUNT_ID,

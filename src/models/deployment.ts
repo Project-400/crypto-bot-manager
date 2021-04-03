@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { v4 as uuid } from 'uuid';
 
 export enum DeploymentHealth {
 	HEALTHY = 'HEALTHY',
@@ -35,9 +36,11 @@ export class Deployment {
 		this.deploymentState = state;
 	}
 
-	public AddNewBot = (botId: string) => {
+	public AddNewBot = (): string => {
+		const botId: string = uuid();
 		this.botCount = this.botCount + 1;
 		this.pendingBots.push(botId);
+		return botId;
 	}
 
 	public ConfirmBot = (botId: string) => {
@@ -63,9 +66,12 @@ export class Deployment {
 		this.lastSuccessfulHealthCall = undefined;
 		if (!this.beginningOfUnhealthyCalls) this.beginningOfUnhealthyCalls = new Date();
 
-		if (moment.duration(moment().diff(moment(this.beginningOfUnhealthyCalls))).asSeconds() >= 60 && this.deploymentState !== DeploymentState.STARTING_UP) {
+		const timeDiff: number = moment().diff(moment(this.beginningOfUnhealthyCalls));
+		const secondsDuration: number = moment.duration(timeDiff).asSeconds();
+
+		if (secondsDuration >= 60 && this.deploymentState !== DeploymentState.STARTING_UP) {
 			console.log('Unhealthy for more than a minute');
-		} else if (moment.duration(moment().diff(moment(this.beginningOfUnhealthyCalls))).asSeconds() >= 300 && this.deploymentState === DeploymentState.STARTING_UP) {
+		} else if (secondsDuration >= 300 && this.deploymentState === DeploymentState.STARTING_UP) {
 			console.log('Unhealthy for more than 5 minutes');
 		} else {
 			console.log('Instance has been unhealthy for less than 60 seconds');

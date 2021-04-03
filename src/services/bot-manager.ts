@@ -4,6 +4,7 @@ import {Health} from "../external-api/bots/health";
 import {Ec2InstanceDeployment} from "@crypto-tracker/common-types";
 import {DeployBotEc2} from "../bot-deployments/deploy-bot-ec2";
 import {InstanceRetrieval} from "../startup/instance-retrieval";
+import {Bot} from "../external-api/bots/bot";
 
 interface DeployedInstances {
 	latestBuild: Deployment[];
@@ -44,10 +45,14 @@ export class BotManager {
 		BotManager.deployInstances.latestBuild = [ new Deployment(newInstanceDNS, BotManager.currentDeploymentId) ];
 	}
 
-	public static CreateTradeBot = (botId: string): void => {
+	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<void> => {
 		const deployment: Deployment = BotManager.GetDeploymentWithMostBots();
-		if (deployment) deployment.AddNewBot(botId);
-		else console.error('NO DEPLOYMENTS LEFT')
+		if (deployment) {
+			const botId: string = deployment.AddNewBot();
+			const botCreated: any = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
+			console.log('BOT CREATED');
+			console.log(botCreated);
+		} else console.error('NO DEPLOYMENTS LEFT')
 	}
 
 	public static DeployBotInstance = async (): Promise<void> => {
@@ -65,7 +70,6 @@ export class BotManager {
 
 	public static MonitorInstancesHealth = (): void => {
 		BotManager.healthInterval = setInterval(() => {
-			console.log(BotManager.deployInstances)
 			BotManager.deployInstances.latestBuild.forEach(async (deployment: Deployment) => {
 				try {
 					const response: { success: boolean } = await Health.HealthCheck(deployment.dns);
