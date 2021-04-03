@@ -49,6 +49,11 @@ export class Deployment {
 		this.bots.push(botId);
 	}
 
+	public FailBot = (botId: string) => {
+		const index: number = this.pendingBots.findIndex((b: string) => b === botId);
+		if (index > -1) this.pendingBots.splice(index, 1);
+	}
+
 	public RemoveBot = (botId: string) => {
 		const index: number = this.bots.findIndex((b: string) => b === botId);
 		if (index > -1) this.bots.splice(index, 1);

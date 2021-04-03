@@ -20,12 +20,12 @@ export class BotManager {
 		previousBuilds: []											// DNS for old builds get moved here from latestBuild array if new build is deployed
 	};
 	private static healthInterval: NodeJS.Timeout;
+	private static botDirectory: { [botId: string]: string } = { }; // BotIds with EC2 DNS associated with it
 
 	public static SetCurrentDeploymentLog = (deployment: Ec2InstanceDeployment): void => {
 		BotManager.currentDeploymentId = deployment.deploymentId;
 		BotManager.currentDeploymentLog = deployment;
 	}
-	// public static SetCurrentDeploymentId = (deploymentId: string): string => BotManager.currentDeploymentId = deploymentId;
 	public static SetLatestBuilds = (builds: Deployment[]): void => {
 		if (BotManager.deployInstances.latestBuild.length) return;
 		BotManager.deployInstances.latestBuild = builds;
@@ -45,14 +45,87 @@ export class BotManager {
 		BotManager.deployInstances.latestBuild = [ new Deployment(newInstanceDNS, BotManager.currentDeploymentId) ];
 	}
 
-	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<void> => {
+	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<{ success: boolean }> => {
 		const deployment: Deployment = BotManager.GetDeploymentWithMostBots();
 		if (deployment) {
 			const botId: string = deployment.AddNewBot();
-			const botCreated: any = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
-			console.log('BOT CREATED');
-			console.log(botCreated);
+			BotManager.AddBotDirectoryItem(botId, deployment.dns);
+
+			const response = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
+
+			if (response.success) deployment.ConfirmBot(botId);
+			else deployment.FailBot(botId);
+
+			return response;
 		} else console.error('NO DEPLOYMENTS LEFT')
+		return { success: false };
+	}
+
+	public static StopBot = async (botId: string): Promise<{ success: boolean }> => {
+		let dns: string | undefined = BotManager.FindBotDirectoryDNS(botId);
+
+		if (!dns) dns = BotManager.FindBotInstanceDNS(botId);
+		if (!dns) {
+			console.log('Failed to find bot instance DNS');
+			return { success: false };
+		}
+
+		const deployment: Deployment| undefined = BotManager.FindDeploymentByDNS(dns);
+
+		if (!deployment) {
+			console.log('Failed to find bot deployment instance');
+			return { success: false };
+		}
+
+		const response: { success: boolean } = await Bot.StopBot(dns, botId);
+
+		if (response.success) {
+			deployment.RemoveBot(botId);
+			BotManager.RemoveBotDirectoryItem(botId);
+		}
+
+		return response;
+	}
+
+	private static FindBotDirectoryDNS = (botId: string): string | undefined => {
+		return BotManager.botDirectory[botId];
+	}
+
+	private static AddBotDirectoryItem = (botId: string, dns: string): void => {
+		BotManager.botDirectory[botId] = dns;
+	}
+
+	private static RemoveBotDirectoryItem = (botId: string): void => {
+		delete BotManager.botDirectory[botId];
+	}
+
+	private static FindBotInstanceDNS = (botId: string): string | undefined => { // Backup method for finding DNS - slower
+		let dns: string | undefined = undefined;
+
+		BotManager.deployInstances.latestBuild.forEach((deployment: Deployment) => {
+			const botRes: string | undefined = deployment.bots.find((b: string) => b === botId);
+			const pendingBotRes: string | undefined = deployment.pendingBots.find((b: string) => b === botId);
+
+			if (botRes || pendingBotRes) dns = deployment.dns;
+		});
+
+		if (dns) return dns;
+
+		BotManager.deployInstances.previousBuilds.forEach((deployment: Deployment) => {
+			const botRes: string | undefined = deployment.bots.find((b: string) => b === botId);
+			const pendingBotRes: string | undefined = deployment.pendingBots.find((b: string) => b === botId);
+
+			if (botRes || pendingBotRes) dns = deployment.dns;
+		});
+
+		return dns;
+	}
+
+	private static FindDeploymentByDNS = (dns: string): Deployment | undefined => {
+		let deployment: Deployment | undefined = BotManager.deployInstances.latestBuild.find((d: Deployment) => d.dns === dns);
+		if (!deployment) deployment = BotManager.deployInstances.previousBuilds.find((d: Deployment) => d.dns === dns);
+
+		return deployment;
 	}
 
 	public static DeployBotInstance = async (): Promise<void> => {
