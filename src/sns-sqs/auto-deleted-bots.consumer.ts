@@ -8,6 +8,7 @@ import {
 	AWS_REGION,
 	AWS_SECRET_ACCESS_KEY_ID
 } from '../environment';
+import {BotManager} from "../services/bot-manager";
 
 AWS.config.update({
 	region: AWS_REGION,
@@ -45,21 +46,26 @@ export class AutoDeletedBotsConsumer {
 
 	private static HandleMessage = (message: SQSMessage): void => {
 		let messageBody: any;
+		let botId: string | undefined = undefined;
 
-		console.log(message);
+		console.log(message)
 
 		try {
-			if (message.Body) messageBody = message.Body;
+			if (message.Body) {
+				messageBody = JSON.parse(message.Body);
+				botId = messageBody.Message;
+				console.log(botId)
+			}
 		} catch (err) {
 			console.error(`Failed to parse SQS message: ${err}`);
 		}
 
-		console.log(messageBody)
-
-		// if (messageBody) {
-		//
-		// 	if (currencySuggestion.symbol) CurrencySuggestionsManager.AddSuggestion(currencySuggestion);
-		// }
+		if (botId) {
+			console.log(`Received request to remove auto deleted bot ${botId}`);
+			BotManager.RemoveFinishedBot(botId);
+		} else {
+			console.error('Error: Received message via Auto Deleted Bot SQS queue with no botId');
+		}
 	}
 
 }

@@ -77,7 +77,7 @@ export class BotManager {
 			return { success: false };
 		}
 
-		const deployment: Deployment| undefined = BotManager.FindDeploymentByDNS(dns);
+		const deployment: Deployment | undefined = BotManager.FindDeploymentByDNS(dns);
 
 		if (!deployment) {
 			console.log('Failed to find bot deployment instance');
@@ -104,6 +104,29 @@ export class BotManager {
 
 	private static RemoveBotDirectoryItem = (botId: string): void => {
 		delete BotManager.botDirectory[botId];
+	}
+
+	public static RemoveFinishedBot = (botId: string): void => { // Triggered via received SQS message from bot instance (Bot has auto finished)
+		const deployment: Deployment | undefined = BotManager.FindDeploymentByBotId(botId);
+
+		if (deployment) {
+			deployment.RemoveBot(botId);
+			BotManager.RemoveBotDirectoryItem(botId);
+		} else console.error(`No deployment found related to bot ${botId}`)
+	}
+
+	private static FindDeploymentByBotId = (botId: string): Deployment | undefined => {
+		let dns: string | undefined = BotManager.FindBotDirectoryDNS(botId);
+
+		if (!dns) dns = BotManager.FindBotInstanceDNS(botId);
+		if (!dns) {
+			console.log('Failed to find bot instance DNS');
+			return undefined;
+		}
+
+		const deployment: Deployment | undefined = BotManager.FindDeploymentByDNS(dns);
+
+		return deployment;
 	}
 
 	private static FindBotInstanceDNS = (botId: string): string | undefined => { // Backup method for finding DNS - slower
