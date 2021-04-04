@@ -165,10 +165,10 @@ export class BotManager {
 
 	private static GetDeploymentWithMostBots = (): Deployment => { // Return the deployment with most bots less than limit
 		return BotManager.deployInstances.latestBuild.sort((a: Deployment, b: Deployment) => {
-			if (a.botCount < b.botCount) return 1;
-			if (a.botCount > b.botCount) return -1;
+			if (a.currentBotCount < b.currentBotCount) return 1;
+			if (a.currentBotCount > b.currentBotCount) return -1;
 			return 0;
-		}).filter((d: Deployment) => d.botCount < ENV.BOT_PER_INSTANCE_LIMIT)[0];
+		}).filter((d: Deployment) => d.currentBotCount < ENV.BOT_PER_INSTANCE_LIMIT)[0];
 	}
 
 	public static MonitorInstancesHealth = (): void => {

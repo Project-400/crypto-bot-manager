@@ -20,9 +20,11 @@ export class Deployment {
 	public deploymentState: DeploymentState;
 	public dns: string;
 	public deploymentId: string;
-	public totalBotCount: number = 0;					// Total count of bots on instance
-	public currentBotCount: number = 0;					// Current count of bots on instance
-	public pendingBotCount: number = 0;					// Pending count of bots on instance
+	public totalBotCount: number = 0;					// Total count of bots on instance since startup including failed
+	public activeBotCount: number = 0;					// Current count of bots trading on instance
+	public pendingBotCount: number = 0;					// Current count of bots setting up on instance
+	public currentBotCount: number = 0;					// Current count of bots (trading and setting up) on instance
+	public failedBotCount: number = 0;					// Total count of failed bots on instance
 	public bots: string[];
 	public pendingBots: string[];
 	public lastSuccessfulHealthCall?: Date;
@@ -41,6 +43,7 @@ export class Deployment {
 		const botId: string = uuid();
 		this.totalBotCount = this.totalBotCount + 1;
 		this.pendingBotCount = this.pendingBotCount + 1;
+		this.currentBotCount = this.currentBotCount + 1;
 		this.pendingBots.push(botId);
 		return botId;
 	}
@@ -49,7 +52,8 @@ export class Deployment {
 		const index: number = this.pendingBots.findIndex((b: string) => b === botId);
 		if (index > -1) {
 			this.pendingBots.splice(index, 1);
-			this.currentBotCount = this.currentBotCount + 1;
+			this.activeBotCount = this.activeBotCount + 1;
+			this.pendingBotCount = this.pendingBotCount - 1;
 		}
 		this.bots.push(botId);
 	}
@@ -59,6 +63,8 @@ export class Deployment {
 		if (index > -1) {
 			this.pendingBots.splice(index, 1);
 			this.pendingBotCount = this.pendingBotCount - 1;
+			this.currentBotCount = this.currentBotCount - 1;
+			this.failedBotCount = this.failedBotCount + 1;
 		}
 	}
 
@@ -67,6 +73,7 @@ export class Deployment {
 		if (index > -1) {
 			this.bots.splice(index, 1);
 			this.currentBotCount = this.currentBotCount - 1;
+			this.activeBotCount = this.activeBotCount - 1;
 		}
 	}
 
