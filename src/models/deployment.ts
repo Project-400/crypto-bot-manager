@@ -20,7 +20,9 @@ export class Deployment {
 	public deploymentState: DeploymentState;
 	public dns: string;
 	public deploymentId: string;
-	public botCount: number;
+	public totalBotCount: number = 0;					// Total count of bots on instance
+	public currentBotCount: number = 0;					// Current count of bots on instance
+	public pendingBotCount: number = 0;					// Pending count of bots on instance
 	public bots: string[];
 	public pendingBots: string[];
 	public lastSuccessfulHealthCall?: Date;
@@ -29,7 +31,6 @@ export class Deployment {
 	public constructor(dns: string, deploymentId: string, health: DeploymentHealth = DeploymentHealth.UNHEALTHY, state: DeploymentState = DeploymentState.UNKNOWN) {
 		this.dns = dns;
 		this.deploymentId = deploymentId;
-		this.botCount = 0;
 		this.bots = [];
 		this.pendingBots = [];
 		this.deploymentHealth = health;
@@ -38,25 +39,35 @@ export class Deployment {
 
 	public AddNewBot = (): string => {
 		const botId: string = uuid();
-		this.botCount = this.botCount + 1;
+		this.totalBotCount = this.totalBotCount + 1;
+		this.pendingBotCount = this.pendingBotCount + 1;
 		this.pendingBots.push(botId);
 		return botId;
 	}
 
 	public ConfirmBot = (botId: string) => {
 		const index: number = this.pendingBots.findIndex((b: string) => b === botId);
-		if (index > -1) this.pendingBots.splice(index, 1);
+		if (index > -1) {
+			this.pendingBots.splice(index, 1);
+			this.currentBotCount = this.currentBotCount + 1;
+		}
 		this.bots.push(botId);
 	}
 
 	public FailBot = (botId: string) => {
 		const index: number = this.pendingBots.findIndex((b: string) => b === botId);
-		if (index > -1) this.pendingBots.splice(index, 1);
+		if (index > -1) {
+			this.pendingBots.splice(index, 1);
+			this.pendingBotCount = this.pendingBotCount - 1;
+		}
 	}
 
 	public RemoveBot = (botId: string) => {
 		const index: number = this.bots.findIndex((b: string) => b === botId);
-		if (index > -1) this.bots.splice(index, 1);
+		if (index > -1) {
+			this.bots.splice(index, 1);
+			this.currentBotCount = this.currentBotCount - 1;
+		}
 	}
 
 	public UpdateSuccessfulHealthCall = () => {
