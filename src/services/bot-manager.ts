@@ -1,10 +1,10 @@
 import { Deployment } from '../models/deployment';
-import {BOT_PER_INSTANCE_LIMIT, ENV, SPACES_LEFT_DEPLOY_TRIGGER} from '../environment';
-import {Health} from "../external-api/bots/health";
-import {Ec2InstanceDeployment} from "@crypto-tracker/common-types";
-import {DeployBotEc2} from "../bot-deployments/deploy-bot-ec2";
-import {InstanceRetrieval} from "../startup/instance-retrieval";
-import {Bot} from "../external-api/bots/bot";
+import { BOT_PER_INSTANCE_LIMIT, ENV, SPACES_LEFT_DEPLOY_TRIGGER } from '../environment';
+import { Health } from '../external-api/bots/health';
+import { Ec2InstanceDeployment } from '@crypto-tracker/common-types';
+import { DeployBotEc2 } from '../bot-deployments/deploy-bot-ec2';
+import { InstanceRetrieval } from '../startup/instance-retrieval';
+import { Bot } from '../external-api/bots/bot';
 
 interface DeployedInstances {
 	latestBuild: Deployment[];
@@ -50,7 +50,7 @@ export class BotManager {
 		BotManager.deployInstances.latestBuild = [ new Deployment(newInstanceDNS, BotManager.currentDeploymentId) ];
 	}
 
-	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<{ success: boolean, botId?: string }> => {
+	public static CreateTradeBot = async (currencyPreChosen: boolean, currency: string | undefined, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<{ success: boolean, botId?: string }> => {
 		BotManager.CheckNeedForNewInstance();
 
 		const deployment: Deployment = BotManager.GetDeploymentWithMostBots();
@@ -61,7 +61,7 @@ export class BotManager {
 			let response = undefined;
 
 			try {
-				response = await Bot.CreateBot(deployment.dns, botId, currency, quoteAmount, repeatedlyTrade, percentageLoss);
+				response = await Bot.CreateBot(deployment.dns, botId, currencyPreChosen, currency, quoteAmount, repeatedlyTrade, percentageLoss);
 			} catch (e) {
 				console.error(e);
 				return { success: false };
