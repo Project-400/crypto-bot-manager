@@ -15,9 +15,9 @@ export class InstanceRetrieval {
 			BotManager.SetLatestBuilds([
 				new Deployment('localhost', 'fake-deployment-id123', DeploymentHealth.HEALTHY, DeploymentState.WORKING)
 			]);
-		} {
-			await InstanceRetrieval.GatherCurrentlyRunningInstances(deployment.deploymentId);
 		}
+
+		await InstanceRetrieval.GatherCurrentlyRunningInstances(deployment.deploymentId);
 
 		return deployment;
 	}
@@ -49,7 +49,7 @@ export class InstanceRetrieval {
 		await new Promise((resolve, reject) => {
 			ec2.describeInstances(params, function (err, data) {
 				const deployments: (AWS.EC2.Instance | undefined)[] | undefined = data.Reservations
-					?.map((r: AWS.EC2.Reservation) => r.Instances)
+					?.map((r: AWS.EC2.Reservation) => r.Instances?.filter((i: AWS.EC2.Instance) => i.State?.Name === 'running' || i.State?.Name === 'pending'))
 					.flat();
 
 				const latestBuildDeployments: (AWS.EC2.Instance)[] | undefined = deployments?.filter((i: AWS.EC2.Instance | undefined) => {
@@ -64,6 +64,9 @@ export class InstanceRetrieval {
 					return !!(deploymentTag && deploymentTag.Value !== deploymentId);
 				}) as AWS.EC2.Instance[];
 
+				console.log('latestBuildDeployments.length')
+				console.log(latestBuildDeployments.length)
+
 				if (latestBuildDeployments) {
 					const latestBuildInstances: Deployment[] = latestBuildDeployments
 						.filter((i: AWS.EC2.Instance | undefined): boolean => !!i)
@@ -74,6 +77,9 @@ export class InstanceRetrieval {
 
 					BotManager.SetLatestBuilds(latestBuildInstances);
 				}
+				console.log('previousBuildDeployments.length')
+				console.log(previousBuildDeployments.length)
+
 				if (previousBuildDeployments) {
 					const previousBuildInstances: Deployment[] = previousBuildDeployments
 						.filter((i: AWS.EC2.Instance | undefined): boolean => !!i)

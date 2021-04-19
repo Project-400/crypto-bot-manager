@@ -67,8 +67,7 @@ export class DeployBotEc2 {
 						console.error(err, err.stack);
 					}
 				);
-		})
-
+		});
 	}
 
 	private static GetDeploymentURL = async (instanceId: string, deploymentId: string) => {

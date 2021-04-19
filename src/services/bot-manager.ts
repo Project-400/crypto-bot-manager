@@ -1,5 +1,5 @@
 import { Deployment } from '../models/deployment';
-import { ENV } from '../environment';
+import {BOT_PER_INSTANCE_LIMIT, ENV, SPACES_LEFT_DEPLOY_TRIGGER} from '../environment';
 import {Health} from "../external-api/bots/health";
 import {Ec2InstanceDeployment} from "@crypto-tracker/common-types";
 import {DeployBotEc2} from "../bot-deployments/deploy-bot-ec2";
@@ -21,22 +21,27 @@ export class BotManager {
 	};
 	private static healthInterval: NodeJS.Timeout;
 	private static botDirectory: { [botId: string]: string } = { }; // BotIds with EC2 DNS associated with it
+	private static currentlyDeployingInstance: boolean = false;
+	// TODO: Keep track of bots to be deployed when instance becomes available (if all slots are full)
 
 	public static SetCurrentDeploymentLog = (deployment: Ec2InstanceDeployment): void => {
 		BotManager.currentDeploymentId = deployment.deploymentId;
 		BotManager.currentDeploymentLog = deployment;
 	}
 	public static SetLatestBuilds = (builds: Deployment[]): void => {
+		console.log('LATEST BUILDS', builds)
 		if (BotManager.deployInstances.latestBuild.length) return;
 		BotManager.deployInstances.latestBuild = builds;
 	}
 	public static SetPreviousBuilds = (builds: Deployment[]): void => {
+		console.log('PREVIOUS BUILDS', builds)
 		if (BotManager.deployInstances.previousBuilds.length) return;
 		BotManager.deployInstances.previousBuilds = builds;
 	}
 	public static GetAllBuilds = (): DeployedInstances => BotManager.deployInstances;
 
 	public static RegisterNewBuild = (deploymentId: string, newInstanceDNS: string): void => {
+		BotManager.currentlyDeployingInstance = false;
 		BotManager.currentDeploymentId = deploymentId;
 		BotManager.deployInstances.previousBuilds = [
 			...BotManager.deployInstances.previousBuilds,
@@ -46,6 +51,8 @@ export class BotManager {
 	}
 
 	public static CreateTradeBot = async (currency: string, quoteAmount: number, repeatedlyTrade: boolean, percentageLoss: number = 1): Promise<{ success: boolean, botId?: string }> => {
+		BotManager.CheckNeedForNewInstance();
+
 		const deployment: Deployment = BotManager.GetDeploymentWithMostBots();
 		if (deployment) {
 			const botId: string = deployment.AddNewBot();
@@ -159,14 +166,15 @@ export class BotManager {
 	}
 
 	public static DeployBotInstance = async (): Promise<void> => {
+		BotManager.currentlyDeployingInstance = true;
 		const deployment: Ec2InstanceDeployment = await InstanceRetrieval.GetLatestDeploymentLog();
 		await DeployBotEc2.LaunchEC2(deployment.deploymentId);
 	}
 
 	private static GetDeploymentWithMostBots = (): Deployment => { // Return the deployment with most bots less than limit
 		return BotManager.deployInstances.latestBuild.sort((a: Deployment, b: Deployment) => {
-			if (a.currentBotCount < b.currentBotCount) return 1;
-			if (a.currentBotCount > b.currentBotCount) return -1;
+			if (a.currentBotCount > b.currentBotCount) return 1;
+			if (a.currentBotCount < b.currentBotCount) return -1;
 			return 0;
 		}).filter((d: Deployment) => d.currentBotCount < ENV.BOT_PER_INSTANCE_LIMIT)[0];
 	}
@@ -179,28 +187,33 @@ export class BotManager {
 			console.log('------------------------')
 
 			BotManager.deployInstances.latestBuild.forEach(async (deployment: Deployment) => {
+				console.log('CHECK LATEST HEALTH', deployment)
 				try {
 					const response: { success: boolean } = await Health.HealthCheck(deployment.dns);
 					if (response.success) {
 						deployment.UpdateSuccessfulHealthCall();
-						return console.log(`Deployment ${deployment.dns} is Healthy`);
+						console.log(`Deployment ${deployment.dns} is Healthy`);
+					} else {
+						deployment.UpdateNonSuccessfulHealthCall();
+						console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 					}
-					deployment.UpdateNonSuccessfulHealthCall();
-					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				} catch (e) {
 					deployment.UpdateNonSuccessfulHealthCall();
 					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				}
 			});
 			BotManager.deployInstances.previousBuilds.forEach(async (deployment: Deployment) => {
+				console.log('CHECK PREVIOUS HEALTH', deployment)
+
 				try {
 					const response: { success: boolean } = await Health.HealthCheck(deployment.dns);
 					if (response.success) {
 						deployment.UpdateSuccessfulHealthCall();
-						return console.log(`Deployment ${deployment.dns} is Healthy`);
+						console.log(`Deployment ${deployment.dns} is Healthy`);
+					} else {
+						deployment.UpdateNonSuccessfulHealthCall();
+						console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 					}
-					deployment.UpdateNonSuccessfulHealthCall();
-					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
 				} catch (e) {
 					deployment.UpdateNonSuccessfulHealthCall();
 					console.error(`Error response from deployment ${deployment.dns} - NOT Healthy`);
@@ -211,6 +224,26 @@ export class BotManager {
 
 	public static StopBotManager = (): void => {
 		clearInterval(BotManager.healthInterval);
+	}
+
+	private static CheckNeedForNewInstance = (): void => {
+		console.log('CHECK AVAILABLE SPOTS')
+
+		if (BotManager.currentlyDeployingInstance) return;
+
+		console.log('GOING AHEAD')
+		const totalInstances: number = BotManager.deployInstances.latestBuild.length;
+		const totalBots: number = BotManager.GetTotalBotCount();
+		const totalPossibleBots: number = totalInstances * BOT_PER_INSTANCE_LIMIT;
+		const spacesLeft: number = totalPossibleBots - totalBots;
+
+		if (spacesLeft <= SPACES_LEFT_DEPLOY_TRIGGER) BotManager.DeployBotInstance();
+	}
+
+	private static GetTotalBotCount = (): number => {
+		return BotManager.deployInstances.latestBuild.reduce((total: number, deployment: Deployment) => {
+			return total + deployment.currentBotCount;
+		}, 0);
 	}
 
 }

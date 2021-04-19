@@ -20,6 +20,7 @@ export const AWS_AUTO_DELETED_BOTS_SQS_QUEUE: string = process.env.AWS_AUTO_DELE
 export const AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME: string = process.env.AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME as string;
 
 export const BOT_PER_INSTANCE_LIMIT: number = Number(process.env.BOT_PER_INSTANCE_LIMIT);
+export const SPACES_LEFT_DEPLOY_TRIGGER: number = Number(process.env.SPACES_LEFT_DEPLOY_TRIGGER);
 
 export const ENV: { [key: string]: any } = {
 	APP_NAME,
@@ -33,6 +34,7 @@ export const ENV: { [key: string]: any } = {
 		AWS_CRYPTO_BOT_DEPLOYMENT_SQS_QUEUE_NAME
 	},
 	BOT_PER_INSTANCE_LIMIT,
+	SPACES_LEFT_DEPLOY_TRIGGER,
 	CRUD_SERVICE_URL
 };
 
