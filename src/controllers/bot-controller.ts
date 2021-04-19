@@ -30,6 +30,23 @@ export class BotController {
 		}
 	}
 
+	public static createAutoBot = async (req: Request, res: Response): Promise<Response> => {
+		if (!req.query || !req.query.quoteAmount)
+			return res.status(400).json({ error: 'Invalid request params' });
+
+		const quoteAmount: number = parseFloat(req.query.quoteAmount.toString());
+		const percentageLoss: number = req.query.percentageLoss ? parseFloat(req.query.percentageLoss.toString()) : 1;
+
+		try {
+			const response: { success: boolean } = await BotManager.CreateTradeBot(false, undefined, quoteAmount, false, percentageLoss);
+
+			if (!response.success) return res.status(500).json({ success: false, error: 'Failed to create auto bot (1)' });
+			return res.status(200).json(response);
+		} catch {
+			return res.status(500).json({ success: false, error: 'Failed to create auto bot (2)' });
+		}
+	}
+
 	public static stopBot = async (req: Request, res: Response): Promise<Response> => {
 		if (!req.query || !req.query.botId)
 			return res.status(400).json({ error: 'Invalid request params' });

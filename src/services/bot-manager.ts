@@ -61,6 +61,8 @@ export class BotManager {
 			let response = undefined;
 
 			try {
+				console.log(currencyPreChosen)
+				console.log(' 11currencyPreChosen')
 				response = await Bot.CreateBot(deployment.dns, botId, currencyPreChosen, currency, quoteAmount, repeatedlyTrade, percentageLoss);
 			} catch (e) {
 				console.error(e);
