@@ -4,20 +4,20 @@ import {BotManager} from "../services/bot-manager";
 export class BotController {
 
 	public static createBot = async (req: Request, res: Response): Promise<Response> => {
-		if (!req.body || !req.body.quoteAmount || req.body.repeatedlyTrade === undefined)
+		if (!req.query || !req.query.quoteAmount || req.query.repeatedlyTrade === undefined)
 			return res.status(400).json({ error: 'Invalid request params' });
 
-		const currencyPreChosen: boolean = !!req.body.botChoiceCurrency;
+		const currencyPreChosen: boolean = req.query.botChoiceCurrency!.toString() === 'true';
 
 		let currency: string | undefined;
 		if (currencyPreChosen) {
 			currency = undefined;
 		} else {
-			currency = req.body.currency.toString();
+			currency = req.query.currency!.toString();
 		}
 
-		const quoteAmount: number = parseFloat(req.body.quoteAmount.toString());
-		const repeatedlyTrade: boolean = req.body.repeatedlyTrade.toString() === 'true';
+		const quoteAmount: number = parseFloat(req.query.quoteAmount.toString());
+		const repeatedlyTrade: boolean = req.query.repeatedlyTrade.toString() === 'true';
 		const percentageLoss: number = req.query.percentageLoss ? parseFloat(req.query.percentageLoss.toString()) : 1;
 
 		try {
@@ -31,10 +31,10 @@ export class BotController {
 	}
 
 	public static stopBot = async (req: Request, res: Response): Promise<Response> => {
-		if (!req.body || !req.body.botId)
+		if (!req.query || !req.query.botId)
 			return res.status(400).json({ error: 'Invalid request params' });
 
-		const botId: string = req.body.botId.toString();
+		const botId: string = req.query.botId.toString();
 
 		const response: { success: boolean } = await BotManager.StopBot(botId);
 
